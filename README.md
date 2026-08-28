@@ -1,140 +1,82 @@
 <p align="center">
-  <img src="https://content.umami.is/website/images/umami-logo.png" alt="IPLens Logo" width="100">
+  <img src="./public/iplens-logo.svg" alt="IPLens" width="88">
 </p>
 
 <h1 align="center">IPLens</h1>
 
 <p align="center">
-  <i>IPLens is a privacy-first analytics platform. Traffic, campaigns, behavior, conversions, and revenue in one place — no cookies, no surveillance, self-hosted or in the cloud.</i>
+  <i>Internal web analytics for IP Motion MC — traffic, campaigns, behavior and conversions in one place, self-hosted, no third-party trackers.</i>
 </p>
 
 <p align="center">
-  <a href="https://github.com/umami-software/umami/releases"><img src="https://img.shields.io/github/release/umami-software/umami.svg" alt="GitHub Release" /></a>
-  <a href="https://github.com/umami-software/umami/blob/master/LICENSE"><img src="https://img.shields.io/github/license/umami-software/umami.svg" alt="MIT License" /></a>
-  <a href="https://github.com/umami-software/umami/actions"><img src="https://img.shields.io/github/actions/workflow/status/umami-software/umami/ci.yml" alt="Build Status" /></a>
-  <a href="https://cloud.umami.is/share/LGazGOecbDtaIwDr/umami.is" style="text-decoration: none;"><img src="https://img.shields.io/badge/Try%20Demo%20Now-Click%20Here-brightgreen" alt="Umami Demo" /></a>
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License" /></a>
+  <a href="https://github.com/umami-software/umami"><img src="https://img.shields.io/badge/based%20on-umami-lightgrey.svg" alt="Based on umami" /></a>
 </p>
+
+---
+
+IPLens is built on [umami](https://github.com/umami-software/umami) (MIT). We run it ourselves
+and develop our own features on top of it, so this repository is where our changes live — it is
+not a mirror and it is expected to drift from upstream.
+
+Anything we haven't changed still behaves exactly as documented upstream, so
+[umami.is/docs](https://umami.is/docs/) remains the reference for product features: tracking
+script setup, reports, teams, the data API, and so on. This README only covers what is specific
+to running and developing IPLens.
 
 ---
 
 ## 🚀 Getting Started
 
-A detailed getting started guide can be found at [umami.is/docs](https://umami.is/docs/).
-
----
-
-## 🛠 Installing from Source
-
-### Requirements
-
-- A server with Node.js version 18.18+.
-- A PostgreSQL database version v12.14+.
-
-### Get the source code and install packages
+Requirements: **Node 22**, **pnpm**, **Docker**. Nothing else — no API keys, no accounts, no
+external services.
 
 ```bash
-git clone https://github.com/umami-software/umami.git
-cd umami
 pnpm install
+pnpm start:local
 ```
 
-### Configure Umami
+Then open <http://localhost:3000> and sign in with **admin** / **umami**.
 
-Create an `.env` file with the following:
+That single command is idempotent and safe to re-run. On first use it writes a local `.env`
+(generating an `APP_SECRET` for you), and on every run it starts PostgreSQL, waits for it to
+become healthy, generates the Prisma client, and applies any pending migrations before starting
+the dev server.
 
-```bash
-DATABASE_URL=connection-url
-```
+Only the database runs in Docker. The app itself runs natively so that edits hot-reload —
+rebuilding a container per change would make the loop unusable.
 
-Optional: set `API_URL` to change the base URL used by internal UI API calls.
-Relative paths are served under `BASE_PATH`; absolute URLs are proxied through the local `/api` route.
-For example, `API_URL=/internal-api` or `API_URL=https://api.example.com/api`.
+**Ports.** The app serves on `3000`. PostgreSQL publishes on `54329` rather than the default
+`5432`, because a development machine usually already has one running. If that still clashes,
+set `DB_PORT` in `.env`; it moves both the published port and the connection string.
 
-Optional: set `TWO_FACTOR_ENCRYPTION_KEY` to a 64-character hex string to enable two-factor
-authentication. Generate one with `openssl rand -hex 32`. Two-factor authentication is unavailable
-and cannot be required until this key is set.
-
-The connection URL format:
+To stop the database when you're done:
 
 ```bash
-postgresql://username:mypassword@localhost:5432/mydb
-```
-
-### Build the Application
-
-```bash
-pnpm run build
-```
-
-The build step will create tables in your database if you are installing for the first time. It will also create a login user with username **admin** and password **umami**.
-
-### Start the Application
-
-```bash
-pnpm run start
-```
-
-By default, this will launch the application on `http://localhost:3000`. You will need to either [proxy](https://docs.nginx.com/nginx/admin-guide/web-server/reverse-proxy/) requests from your web server or change the [port](https://nextjs.org/docs/api-reference/cli#production) to serve the application directly.
-
----
-
-## 🐳 Installing with Docker
-
-Umami provides Docker images as well as a Docker compose file for easy deployment.
-
-Docker image:
-
-```bash
-docker pull docker.umami.is/umami-software/umami:latest
-```
-
-Docker compose (Runs Umami with a PostgreSQL database):
-
-```bash
-docker compose up -d
+docker compose -f docker-compose.local.yml down
 ```
 
 ---
 
-## 🔄 Getting Updates
+## 🐳 Running the Production Image
 
-To get the latest features, simply do a pull, install any new dependencies, and rebuild:
-
-```bash
-git pull
-pnpm install
-pnpm build
-```
-
-To update the Docker image, simply pull the new images and rebuild:
+`docker-compose.yml` builds the app image from this repository and runs it alongside PostgreSQL —
+this is the deployment path, not the development one.
 
 ```bash
-docker compose pull
-docker compose up --force-recreate -d
+docker compose up -d --build
 ```
+
+The app serves on `3900` and the database publishes on `54329`.
+
+The image build runs `next build --webpack`. This is deliberate: Next.js 16 defaults to Turbopack,
+which does not emit the `.next/standalone` output the runtime stage needs. The build also needs
+more heap than the default, so the builder stage raises `NODE_OPTIONS` — allow Docker at least
+**4 GB** of memory or the build will be killed partway through with no useful error.
 
 ---
 
-## 🛟 Support
+## 📄 License
 
-<p align="center">
-  <a href="https://github.com/umami-software/umami"><img src="https://img.shields.io/badge/GitHub--blue?style=social&logo=github" alt="GitHub" /></a>
-  <a href="https://twitter.com/umami_software"><img src="https://img.shields.io/badge/Twitter--blue?style=social&logo=twitter" alt="Twitter" /></a>
-  <a href="https://linkedin.com/company/umami-software"><img src="https://img.shields.io/badge/LinkedIn--blue?style=social&logo=linkedin" alt="LinkedIn" /></a>
-  <a href="https://umami.is/discord"><img src="https://img.shields.io/badge/Discord--blue?style=social&logo=discord" alt="Discord" /></a>
-</p>
-
-[release-shield]: https://img.shields.io/github/release/umami-software/umami.svg
-[releases-url]: https://github.com/umami-software/umami/releases
-[license-shield]: https://img.shields.io/github/license/umami-software/umami.svg
-[license-url]: https://github.com/umami-software/umami/blob/master/LICENSE
-[build-shield]: https://img.shields.io/github/actions/workflow/status/umami-software/umami/ci.yml
-[build-url]: https://github.com/umami-software/umami/actions
-[github-shield]: https://img.shields.io/badge/GitHub--blue?style=social&logo=github
-[github-url]: https://github.com/umami-software/umami
-[twitter-shield]: https://img.shields.io/badge/Twitter--blue?style=social&logo=twitter
-[twitter-url]: https://twitter.com/umami_software
-[linkedin-shield]: https://img.shields.io/badge/LinkedIn--blue?style=social&logo=linkedin
-[linkedin-url]: https://linkedin.com/company/umami-software
-[discord-shield]: https://img.shields.io/badge/Discord--blue?style=social&logo=discord
-[discord-url]: https://discord.com/invite/4dz4zcXYrQ
+MIT, inherited from umami. The original copyright notice is retained in [LICENSE](./LICENSE);
+please keep it there.
