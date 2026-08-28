@@ -1,13 +1,13 @@
 {
-  "name": "umami",
+  "name": "iplens",
   "version": "3.3.1",
   "description": "A modern, privacy-focused alternative to Google Analytics.",
-  "author": "Umami Software, Inc. <hello@umami.is>",
+  "author": "IP Motion MC",
   "license": "MIT",
-  "homepage": "https://umami.is",
+  "homepage": "https://github.com/ipmotionmc/iplens",
   "repository": {
     "type": "git",
-    "url": "https://github.com/umami-software/umami.git"
+    "url": "https://github.com/ipmotionmc/iplens.git"
   },
   "type": "module",
   "scripts": {
