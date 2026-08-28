@@ -1,0 +1,32 @@
+---
+# Local development stack: datastore only.
+#
+# The app itself runs natively (`pnpm dev`) so that changes hot-reload — building a
+# container per edit would make the loop unusable. The production-style stack is still
+# in docker-compose.yml.
+#
+# An explicit project name keeps container and volume names from colliding with anything
+# else running on the machine.
+name: iplens-dev
+
+services:
+  db:
+    image: postgres:15-alpine
+    ports:
+      # Deliberately not 5432 — a developer machine often already has Postgres, or a
+      # second one on 5433. Override with DB_PORT in .env if this still clashes.
+      - '${DB_PORT:-54329}:5432'
+    environment:
+      POSTGRES_DB: iplens
+      POSTGRES_USER: iplens
+      POSTGRES_PASSWORD: iplens
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  db-data:
