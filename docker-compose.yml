@@ -1,7 +1,9 @@
 ---
 services:
   umami:
-    image: ghcr.io/umami-software/umami:latest
+    build:
+      context: .
+    image: iplens:local
     ports:
       - "3900:3000"
     environment:
