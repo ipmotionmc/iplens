@@ -1,0 +1,17 @@
+name: Report
+description: Something in IPLens isn't doing what you need.
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What's happening
+      description: What you're seeing, and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Anything else
+      description: Numbers, screenshots, when you first noticed — whatever you already have.
+    validations:
+      required: false
